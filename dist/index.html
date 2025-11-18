@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="shortcut icon" href="../favicon.png" />
+  <link rel="manifest" href="/Dicoding-Story-App/assets/manifest-CQeoXzg-.json">
+  <meta name="theme-color" content="#4f46e5">
+  <title>Share Story</title>
+
+  <!-- CSS — PAKAI ./ (relatif dari folder src) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script type="module" crossorigin src="/Dicoding-Story-App/assets/index-BtV_dpES.js"></script>
+  <link rel="stylesheet" crossorigin href="/Dicoding-Story-App/assets/index-CFeyqRYa.css">
+</head>
+<body>
+  <header>
+    <div class="main-header container">
+      <a class="brand-name" href="#/">Share Story</a>
+      <nav id="navigation-drawer" class="navigation-drawer">
+        <ul id="nav-list" class="nav-list">
+          <li><a href="#/">Beranda</a></li>
+          <li><a href="#/add">Tambah Cerita</a></li>
+          <li><a href="#/profile">Profil</a></li>
+        </ul>
+      </nav>
+      <button id="drawer-button" class="drawer-button">Menu</button>
+    </div>
+  </header>
+
+  <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
+  <main id="main-content" class="main-content" tabindex="-1"></main>
+
+  <!-- Toggle Push Notification -->
+  <div class="push-toggle-container" aria-live="polite">
+    <label class="switch">
+      <input type="checkbox" id="push-toggle">
+      <span class="slider round"></span>
+    </label>
+    <span class="toggle-label">Notifikasi Push</span>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- INI YANG SALAH SEBELUMNYA! GANTI JADI ./scripts/index.js -->
+</body>
+</html>
