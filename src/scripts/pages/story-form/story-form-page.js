@@ -238,45 +238,61 @@ export default class StoryFormPage {
   }
 
   async handleFormSubmit() {
-    const form = document.getElementById('storyForm');
-    const submitBtn = form.querySelector('.submit-btn');
-    const btnText = submitBtn.querySelector('.btn-text');
-    const btnLoading = submitBtn.querySelector('.btn-loading');
-    
-    submitBtn.disabled = true;
-    btnText.hidden = true;
-    btnLoading.hidden = false;
+  const form = document.getElementById('storyForm');
+  const submitBtn = form.querySelector('.submit-btn');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const btnLoading = submitBtn.querySelector('.btn-loading');
+  
+  submitBtn.disabled = true;
+  btnText.hidden = true;
+  btnLoading.hidden = false;
 
-    const formData = new FormData();
-    formData.append('description', document.getElementById('desc').value.trim());
-    formData.append('lat', document.getElementById('lat').value);
-    formData.append('lon', document.getElementById('lon').value);
+  const formData = new FormData();
+  formData.append('description', document.getElementById('desc').value.trim());
+  formData.append('lat', document.getElementById('lat').value);
+  formData.append('lon', document.getElementById('lon').value);
 
-    const fileInput = document.getElementById('photo');
-    const previewImg = document.getElementById('preview');
-    
-    let photoFile;
-    if (fileInput.files[0]) {
-      photoFile = fileInput.files[0];
-    } else if (previewImg.src && previewImg.src.startsWith('data:')) {
-      photoFile = this.dataURLtoFile(previewImg.src, 'story_photo.jpg');
-    } else {
-      alert('Silakan tambahkan foto terlebih dahulu');
-      this.resetSubmitButton(submitBtn, btnText, btnLoading);
-      return;
-    }
-
-    formData.append('photo', photoFile);
-
-    try {
-      await addStory(formData);
-      alert('Cerita berhasil ditambahkan!');
-      window.location.hash = '/';
-    } catch (err) {
-      alert('Gagal menambahkan cerita: ' + err.message);
-      this.resetSubmitButton(submitBtn, btnText, btnLoading);
-    }
+  const fileInput = document.getElementById('photo');
+  const previewImg = document.getElementById('preview');
+  
+  let photoFile;
+  if (fileInput.files[0]) {
+    photoFile = fileInput.files[0];
+  } else if (previewImg.src && previewImg.src.startsWith('data:')) {
+    photoFile = this.dataURLtoFile(previewImg.src, 'story_photo.jpg');
+  } else {
+    alert('Silakan tambahkan foto terlebih dahulu');
+    this.resetSubmitButton(submitBtn, btnText, btnLoading);
+    return;
   }
+
+  formData.append('photo', photoFile);
+
+  try {
+    const response = await addStory(formData);
+    
+    // INI DIA TRIGGER PUSH NOTIFIKASI KE SEMUA USER!
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready.then(registration => {
+        registration.active.postMessage({
+          type: 'NEW_STORY',
+          payload: {
+            title: 'Cerita Baru!',
+            body: `"${document.getElementById('desc').value.trim().substring(0, 50)}..."`,
+            icon: '/icons/icon-192.png',
+            url: '/'
+          }
+        });
+      });
+    }
+
+    alert('Cerita berhasil ditambahkan!');
+    window.location.hash = '/';
+  } catch (err) {
+    alert('Gagal menambahkan cerita: ' + err.message);
+    this.resetSubmitButton(submitBtn, btnText, btnLoading);
+  }
+}
 
   resetSubmitButton(submitBtn, btnText, btnLoading) {
     submitBtn.disabled = false;

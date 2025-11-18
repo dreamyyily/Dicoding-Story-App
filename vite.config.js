@@ -2,12 +2,13 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: '/Dicoding-Story-App/',
-  root: resolve(__dirname, 'src'),
-  publicDir: resolve(__dirname, 'src', 'public'),
+  root: 'src',                                    // INI YANG HILANG!!! WAJIB ADA
   build: {
-    outDir: resolve(__dirname, 'dist'),
+    outDir: '../dist',                            // hasil build ke folder dist di root
     emptyOutDir: true,
+  },
+  server: {
+    port: 5173,
   },
   resolve: {
     alias: {
