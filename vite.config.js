@@ -2,9 +2,10 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  root: 'src',                                    // INI YANG HILANG!!! WAJIB ADA
+  base: '/Dicoding-Story-App/',
+  root: 'src',                                    
   build: {
-    outDir: '../dist',                            // hasil build ke folder dist di root
+    outDir: '../dist',                           
     emptyOutDir: true,
   },
   server: {
