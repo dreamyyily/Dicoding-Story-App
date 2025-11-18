@@ -1,47 +1,43 @@
 import { getStories } from '../../model.js';
 import { initMap } from '../../utils/map.js';
+import { Idb } from '../../utils/idb.js';
 
 export default class HomePage {
   async render() {
-  this.loadHomeStyles();
-  return `
-    <section class="container home-page">
-      <!-- HANYA 1 H1 DI SINI -->
-      <h1 class="page-title">Daftar Cerita</h1>
-      <p class="page-subtitle">Daftar semua cerita pengguna</p>
+    this.loadHomeStyles();
+    return `
+      <section class="container home-page">
+        <h1 class="page-title">Daftar Cerita</h1>
+        <p class="page-subtitle">Daftar semua cerita pengguna</p>
 
-      <!-- LABEL UNTUK INPUT CARI -->
-      <label for="filter" class="visually-hidden">
-        Cari cerita berdasarkan nama atau deskripsi
-      </label>
-      <input 
-        type="text" 
-        id="filter" 
-        placeholder="Cari cerita..." 
-        class="search-input"
-        aria-label="Cari ceritaberdasarkan nama atau deskripsi"
-      />
+        <label for="filter" class="visually-hidden">
+          Cari cerita berdasarkan nama atau deskripsi
+        </label>
+        <input 
+          type="text" 
+          id="filter" 
+          placeholder="Cari cerita..." 
+          class="search-input"
+          aria-label="Cari cerita berdasarkan nama atau deskripsi"
+        />
 
-      <div class="content-layout">
-        <!-- BAGIAN KIRI: LIST CERITA -->
-        <section class="stories-section" aria-labelledby="stories-heading">
-          <h2 id="stories-heading" class="section-title">Daftar Cerita</h2>
-          <div id="story-list" class="story-list"></div>
-        </section>
+        <div class="content-layout">
+          <section class="stories-section" aria-labelledby="stories-heading">
+            <h2 id="stories-heading" class="section-title">Daftar Cerita</h2>
+            <div id="story-list" class="story-list"></div>
+          </section>
 
-        <!-- BAGIAN KANAN: PETA -->
-        <section class="map-section" aria-labelledby="map-heading">
-          <h2 id="map-heading" class="section-title">Peta Lokasi Cerita</h2>
-          <div id="map" class="map-container"></div>
-        </section>
-      </div>
-    </section>
-  `;
-}
+          <section class="map-section" aria-labelledby="map-heading">
+            <h2 id="map-heading" class="section-title">Peta Lokasi Cerita</h2>
+            <div id="map" class="map-container"></div>
+          </section>
+        </div>
+      </section>
+    `;
+  }
 
   loadHomeStyles() {
     if (document.getElementById('home-styles')) return;
-    
     const link = document.createElement('link');
     link.id = 'home-styles';
     link.rel = 'stylesheet';
@@ -52,7 +48,7 @@ export default class HomePage {
   async afterRender() {
     try {
       const stories = await getStories();
-      this.renderStories(stories);
+      await this.renderStories(stories); // render dengan tombol favorit
       this.initMap(stories);
       this.initFilter(stories);
     } catch (error) {
@@ -61,43 +57,75 @@ export default class HomePage {
     }
   }
 
-renderStories(stories) {
-  const storyList = document.getElementById('story-list');
-  
-  if (!stories || stories.length === 0) {
-    storyList.innerHTML = '<p class="no-stories">Tidak ada cerita ditemukan.</p>';
-    return;
+  async renderStories(stories) {
+    const storyList = document.getElementById('story-list');
+
+    if (!stories || stories.length === 0) {
+      storyList.innerHTML = '<p class="no-stories">Tidak ada cerita ditemukan.</p>';
+      return;
+    }
+
+    const favoriteStories = await Idb.getAll();
+    const favoriteIds = favoriteStories.map(s => s.id);
+
+    storyList.innerHTML = stories.map(story => {
+      const date = new Date(story.createdAt).toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const isFavorite = favoriteIds.includes(story.id);
+
+      return `
+        <article class="story-card" tabindex="0">
+          <img 
+            src="${story.photoUrl}" 
+            alt="Foto cerita dari ${story.name}" 
+            class="story-image"
+            loading="lazy"
+          />
+          <div class="story-content">
+            <h3 class="story-title">${story.name}</h3>
+            <time class="story-date" datetime="${story.createdAt}">${date}</time>
+            <p class="story-desc">${story.description}</p>
+            <button class="btn-favorite" data-id="${story.id}">
+              ${isFavorite ? 'Hapus dari Favorit' : 'Simpan ke Favorit'}
+            </button>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    this.initFavoriteButtons(); // inisialisasi tombol klik
   }
 
-  storyList.innerHTML = stories.map(story => {
-    const date = new Date(story.createdAt).toLocaleDateString('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  initFavoriteButtons() {
+    const buttons = document.querySelectorAll('.btn-favorite');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const storyId = btn.dataset.id;
+        const story = await getStories().then(stories => stories.find(s => s.id === storyId));
+        if (!story) return;
 
-    return `
-      <article class="story-card" tabindex="0">
-        <img 
-          src="${story.photoUrl}" 
-          alt="Foto cerita dari ${story.name}" 
-          class="story-image"
-          loading="lazy"
-        />
-        
-        <!-- PASTIKAN ADA DIV INI! -->
-        <div class="story-content">
-          <h3 class="story-title">${story.name}</h3>
-          <time class="story-date" datetime="${story.createdAt}">${date}</time>
-          <p class="story-desc">${story.description}</p>
-        </div>
-      </article>
-    `;
-  }).join('');
-}
+        const favoriteStories = await Idb.getAll();
+        const isFavorite = favoriteStories.some(s => s.id === storyId);
+
+        if (isFavorite) {
+          await Idb.delete(storyId);
+          btn.textContent = 'Simpan ke Favorit';
+          alert('Cerita dihapus dari favorit');
+        } else {
+          await Idb.put(story);
+          btn.textContent = 'Hapus dari Favorit';
+          alert('Cerita disimpan ke favorit');
+        }
+      });
+    });
+  }
 
   initMap(stories) {
     const { map } = initMap("map", () => {});
@@ -107,11 +135,7 @@ renderStories(stories) {
           <div class="map-popup">
             <h4>${story.name}</h4>
             <p>${story.description}</p>
-            ${
-              story.photoUrl
-                ? `<img src="${story.photoUrl}" alt="${story.name}" style="max-width: 150px;" />`
-                : ""
-            }
+            ${story.photoUrl ? `<img src="${story.photoUrl}" alt="${story.name}" style="max-width: 150px;" />` : ""}
           </div>
         `);
       } else {
@@ -122,7 +146,6 @@ renderStories(stories) {
 
   initFilter(stories) {
     const filterInput = document.getElementById('filter');
-    
     filterInput.addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase().trim();
       const filteredStories = stories.filter(story => 

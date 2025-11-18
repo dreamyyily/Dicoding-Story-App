@@ -8,7 +8,6 @@
   <meta name="theme-color" content="#4f46e5">
   <title>Share Story</title>
 
-  <!-- CSS — PAKAI ./ (relatif dari folder src) -->
   <link rel="stylesheet" href="./styles/styles.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
@@ -20,6 +19,7 @@
         <ul id="nav-list" class="nav-list">
           <li><a href="#/">Beranda</a></li>
           <li><a href="#/add">Tambah Cerita</a></li>
+          <li><a href="#/favorites">Favorit</a></li>
           <li><a href="#/profile">Profil</a></li>
         </ul>
       </nav>
@@ -30,7 +30,11 @@
   <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
   <main id="main-content" class="main-content" tabindex="-1"></main>
 
-  <!-- Toggle Push Notification -->
+<button id="btn-install" style="display:none;" class="install-btn">
+    Install Aplikasi
+  </button>
+
+  <!-- Toggle Notifikasi Push -->
   <div class="push-toggle-container" aria-live="polite">
     <label class="switch">
       <input type="checkbox" id="push-toggle">
@@ -41,7 +45,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- INI YANG SALAH SEBELUMNYA! GANTI JADI ./scripts/index.js -->
   <script type="module" src="./scripts/index.js"></script>
 </body>
 </html>

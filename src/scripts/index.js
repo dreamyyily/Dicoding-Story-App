@@ -1,30 +1,42 @@
-// src/scripts/index.js — FINAL VERSION YANG 100% JALAN!
-
 import App from './app.js';
 
-// INI YANG HILANG SELAMA INI!!! WAJIB ADA!
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); 
+  deferredPrompt = e;
+
+  const installBtn = document.getElementById('btn-install');
+  if (!installBtn) return;
+
+  installBtn.style.display = 'block'; 
+  installBtn.addEventListener('click', async () => {
+    deferredPrompt.prompt(); 
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('User response:', outcome);
+    deferredPrompt = null;
+    installBtn.style.display = 'none'; 
+  });
+});
+
 const app = new App({
   navigationDrawer: document.getElementById('navigation-drawer'),
   drawerButton: document.getElementById('drawer-button'),
   content: document.getElementById('main-content'),
 });
 
-// SERVICE WORKER + PUSH NOTIFICATION (kode kamu tetap jalan)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .then(reg => {
       console.log('Service Worker registered:', reg);
-      initPushNotification(reg); // Panggil fungsi push
+      initPushNotification(reg); 
     })
     .catch(err => console.error('SW registration failed:', err));
 }
 
-// Fungsi Push Notification (biar rapi)
 function initPushNotification(registration) {
   const pushToggle = document.getElementById('push-toggle');
   if (!pushToggle) return;
 
-  // Cek status langganan
   registration.pushManager.getSubscription()
     .then(sub => {
       pushToggle.checked = !!sub;

@@ -1,46 +1,31 @@
-export function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('share-story-db', 1);
-    req.onupgradeneeded = e => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('stories')) {
-        db.createObjectStore('stories', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('outbox')) {
-        db.createObjectStore('outbox', { autoIncrement: true });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
+import { openDB } from 'idb';
 
-export async function put(storeName, value) {
-  const db = await openDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction(storeName, 'readwrite');
-    tx.objectStore(storeName).put(value);
-    tx.oncomplete = () => res();
-    tx.onerror = () => rej(tx.error);
-  });
-}
+const DB_NAME = 'stories-db';
+const STORE_NAME = 'favorites';
+const DB_VERSION = 1;
 
-export async function getAll(storeName) {
-  const db = await openDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction(storeName, 'readonly');
-    const req = tx.objectStore(storeName).getAll();
-    req.onsuccess = () => res(req.result);
-    req.onerror = () => rej(req.error);
-  });
-}
+const dbPromise = openDB(DB_NAME, DB_VERSION, {
+  upgrade(db) {
+    if (!db.objectStoreNames.contains(STORE_NAME)) {
+      db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    }
+  },
+});
 
-export async function del(storeName, key) {
-  const db = await openDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction(storeName, 'readwrite');
-    tx.objectStore(storeName).delete(key);
-    tx.oncomplete = () => res();
-    tx.onerror = () => rej(tx.error);
-  });
-}
+export const Idb = {
+  async getAll() {
+    return (await dbPromise).getAll(STORE_NAME);
+  },
+
+  async get(id) {
+    return (await dbPromise).get(STORE_NAME, id);
+  },
+
+  async put(story) {
+    return (await dbPromise).put(STORE_NAME, story);
+  },
+
+  async delete(id) {
+    return (await dbPromise).delete(STORE_NAME, id);
+  },
+};
