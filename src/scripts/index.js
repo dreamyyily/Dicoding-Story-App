@@ -1,22 +1,5 @@
 import App from './app.js';
-
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault(); 
-  deferredPrompt = e;
-
-  const installBtn = document.getElementById('btn-install');
-  if (!installBtn) return;
-
-  installBtn.style.display = 'block'; 
-  installBtn.addEventListener('click', async () => {
-    deferredPrompt.prompt(); 
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log('User response:', outcome);
-    deferredPrompt = null;
-    installBtn.style.display = 'none'; 
-  });
-});
+import NotificationHelper from './utils/notification-helper.js';
 
 const app = new App({
   navigationDrawer: document.getElementById('navigation-drawer'),
@@ -24,70 +7,45 @@ const app = new App({
   content: document.getElementById('main-content'),
 });
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(reg => {
-      console.log('Service Worker registered:', reg);
-      initPushNotification(reg); 
-    })
-    .catch(err => console.error('SW registration failed:', err));
-}
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
 
-function initPushNotification(registration) {
-  const pushToggle = document.getElementById('push-toggle');
-  if (!pushToggle) return;
+  const installBtn = document.getElementById('btn-install');
+  if (!installBtn) return;
 
-  registration.pushManager.getSubscription()
-    .then(sub => {
-      pushToggle.checked = !!sub;
-    });
+  installBtn.style.display = 'block';
+  installBtn.addEventListener('click', async () => {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('User response:', outcome);
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+});
 
+const pushToggle = document.getElementById('push-toggle');
+if (pushToggle) {
   pushToggle.addEventListener('click', async () => {
     if (pushToggle.checked) {
-      try {
-        const resp = await fetch('/vapid-public-key');
-        const vapidPublicKey = await resp.text();
-        const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
-
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: convertedVapidKey
-        });
-
-        await fetch('/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(subscription)
-        });
-
-        alert('Berhasil berlangganan notifikasi!');
-      } catch (err) {
-        pushToggle.checked = false;
-        alert('Gagal berlangganan: ' + err.message);
-      }
+      await NotificationHelper.requestPermission();
+      NotificationHelper.showNotification('Notifikasi diaktifkan!');
     } else {
-      try {
-        const subscription = await registration.pushManager.getSubscription();
-        if (subscription) {
-          await fetch('/unsubscribe', {
-            method: 'POST',
-            body: JSON.stringify(subscription)
-          });
-          await subscription.unsubscribe();
-        }
-        alert('Berhenti berlangganan notifikasi');
-      } catch (err) {
-        console.error(err);
-      }
+      NotificationHelper.showNotification('Notifikasi dimatikan ❌');
     }
   });
 }
+const subBtn = document.getElementById('subscribe-btn');
+if (subBtn) {
+  subBtn.addEventListener('click', async () => {
+    await NotificationHelper.requestPermission();
+    NotificationHelper.showNotification('Notifikasi berhasil diaktifkan!');
+  });
+}
 
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  const raw = window.atob(base64);
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => console.log('Service Worker registered:', reg))
+    .catch(err => console.error('SW registration failed:', err));
 }
